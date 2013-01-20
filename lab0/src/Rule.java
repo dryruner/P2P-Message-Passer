@@ -1,3 +1,5 @@
+package bin;
+
 public class Rule
 {
 	private String action;

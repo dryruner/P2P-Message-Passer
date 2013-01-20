@@ -1,0 +1,14 @@
+Jan 20, 2013 2:28:06 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:Ack|data:aasdads|id:1
+Jan 20, 2013 2:28:25 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:Ack|data:dadsadsadasdsdasdasdasdsa|id:2
+Jan 20, 2013 2:28:55 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:asdasdas|data:asddddddddddddddddddd|id:3
+Jan 20, 2013 2:30:14 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:Ack|data:adsdasdasdads|id:7
+Jan 20, 2013 2:30:14 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:Lookup|data:asasaas|id:4
+Jan 20, 2013 2:30:14 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:Lookup|data:addsaasdas|id:6
+Jan 20, 2013 2:30:14 AM bin.ReceiverWorker run
+INFO: src:alice|dest:bob|kind:Ack|data:adsdasdasdads|id:8

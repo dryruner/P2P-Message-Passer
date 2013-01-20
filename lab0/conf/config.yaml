@@ -7,18 +7,18 @@
 # The local node's name is included in this list
 Configuration :
   - Name : alice 
-    IP   : 192.168.1.52
+    IP   : 128.2.13.133
     Port : 12344        # This is the incoming port on which MP will listen
                         # May be changed for further communication as usual
   - Name : bob 
-    IP   : 192.168.1.112
+    IP   : 128.237.241.138
     Port : 14255
   - Name : charlie
-    IP   : 128.2.130.19
+    IP   : 192.168.0.104
     Port : 12998
   - Name : daphnie
-    IP   : 192.168.1.87
-    Port : 1987
+    IP   : 192.168.0.104
+    Port : 19870
 
 SendRules :
   - Action : drop # Ack message number 4 from bob to alice will not be sent

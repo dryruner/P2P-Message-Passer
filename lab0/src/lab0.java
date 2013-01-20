@@ -1,3 +1,4 @@
+package bin;
 import java.io.*;
 
 public class lab0
@@ -6,7 +7,7 @@ public class lab0
 
 	public static void Usage()
 	{
-		System.out.println("Usage:(for exitting, input exit or quit) \n send <dest> <kind>\tOR:\t receive\n");
+		System.out.println("Usage:(for exitting, input exit or quit) \n send <dest> <kind>\tOR:\t receive\tOR:\tdebug\n");
 	}
 
 	public static String parseInput(String input)
@@ -17,7 +18,7 @@ public class lab0
 			Usage();
 			return null;
 		}
-		if((temp.length == 1 && !(temp[0].equals("receive"))) || (temp.length == 3 && !(temp[0].equals("send"))))
+		if((temp.length == 1 && !(temp[0].equals("receive")) && !(temp[0].equals("debug"))) || (temp.length == 3 && !(temp[0].equals("send"))))
 		{
 			Usage();
 			return null;
@@ -34,6 +35,8 @@ public class lab0
 		}
 		MessagePasser mp = new MessagePasser(args[0], args[1]);
 		mp.init();
+		new Sender(mp).start();
+		new Receiver(mp, args[1]).start();
 
 		String input = null;
 		BufferedReader br = null;
@@ -45,11 +48,24 @@ public class lab0
 				System.out.print(PROMPT);
 				/* get user input */
 				input = br.readLine();
-				if(input.equals("quit") || input.equals("exit"))break;
+				if(input.equals("quit") || input.equals("exit"))System.exit(1);
 				if((input = parseInput(input)) != null)
 				{
 					if(input.equals("receive"))
-						System.out.println(mp.receive());
+					{
+						Message mm = mp.receive();
+						if(mm == null)
+							System.out.println("No new message.");
+						else
+						{
+							System.out.println("Received message (" + mm.getSrc() + "," + mm.getId() + ") from " + mm.getSrc() + " to " + mm.getDest() + ".|Kind: " + mm.getKind() + "|Content: " + (String)mm.getData());
+							System.out.println(mp.getReceiveQueue().size() + " more message(s)");
+						}
+					}
+					else if(input.equals("debug"))
+					{
+						mp.check_status();
+					}
 					else
 					{
 						String[] temp = input.split(" ");

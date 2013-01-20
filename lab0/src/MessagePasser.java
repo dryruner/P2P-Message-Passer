@@ -1,3 +1,4 @@
+package bin;
 import java.util.concurrent.*;
 import java.util.*;
 import java.io.*;
@@ -8,10 +9,11 @@ public class MessagePasser
 	private String conf_filename;
 	private String local_name;
 	private int id = 0;
-	ConcurrentLinkedQueue<Message> receive_queue = new ConcurrentLinkedQueue<Message>();
-	ConcurrentLinkedQueue<Message> send_queue = new ConcurrentLinkedQueue<Message>();
-	ConcurrentLinkedQueue<Message> delay_send_queue = new ConcurrentLinkedQueue<Message>();
-	private HashMap<String, HashMap<String, Object> > users = new HashMap<String, HashMap<String, Object> >();
+	private BlockingQueue<Message> send_queue = new LinkedBlockingQueue<Message>();
+	private ConcurrentLinkedQueue<Message> receive_queue = new ConcurrentLinkedQueue<Message>();
+	private Queue<Message> delay_send_queue = new LinkedList<Message>();
+	private Queue<Message> delay_receive_queue = new LinkedList<Message>();
+	private HashMap<String, User> users = new HashMap<String, User>();// all users
 	private ArrayList<Rule> SendRules = new ArrayList<Rule>();
 	private ArrayList<Rule> ReceiveRules = new ArrayList<Rule>();
 
@@ -20,6 +22,11 @@ public class MessagePasser
 		this.conf_filename = conf_filename;
 		this.local_name = local_name;
 	}
+
+	public BlockingQueue<Message> getSendQueue(){return send_queue;}
+	public HashMap<String, User> getUsers(){return users;}
+	public ConcurrentLinkedQueue<Message> getReceiveQueue(){return receive_queue;}
+	public Queue<Message> getDelayReceiveQueue(){return delay_receive_queue;}
 
 	/* A helper function used in init(), or when the configuration file is modified */
 	public void load_config()
@@ -38,7 +45,10 @@ public class MessagePasser
 			for(HashMap<String, Object> mm : config)
 			{
 				String Name = (String)mm.get("Name");
-				users.put(Name, mm);
+				User uu = new User(Name);
+				uu.setIp((String)mm.get("IP"));
+				uu.setPort((Integer)mm.get("Port"));
+				users.put(Name, uu);
 			}
 			if(!users.containsKey(local_name))
 			{
@@ -46,9 +56,6 @@ public class MessagePasser
 				System.exit(1);
 			}
 			ArrayList<HashMap<String, Object> > send_rule_arr = (ArrayList<HashMap<String, Object> >)data.get("SendRules");
-			
-			System.out.println("send_rule_arr: ");
-			System.out.println(send_rule_arr);
 			
 			for(HashMap<String, Object> mm : send_rule_arr)
 			{
@@ -72,9 +79,6 @@ public class MessagePasser
 				SendRules.add(r);
 			}
 
-			System.out.println("SendRules: ");
-			System.out.println(SendRules);
-			
 			ArrayList<HashMap<String, Object> > receive_rule_arr = (ArrayList<HashMap<String, Object> >)data.get("ReceiveRules");
 			for(HashMap<String, Object> mm : receive_rule_arr)
 			{
@@ -97,9 +101,6 @@ public class MessagePasser
 				}
 				ReceiveRules.add(r);
 			}
-//			System.out.println(users);
-//			System.out.println(SendRules);
-//			System.out.println(ReceiveRules);
 		}
 		catch(Exception ex)
 		{
@@ -121,9 +122,24 @@ public class MessagePasser
 	public void init()
 	{
 		load_config();
-//		set_server_side_connection(); // each node starts listening on the port
+//		set_server_side_connection(); // each node starts listening on the port indicated in the configuration file.
 	}
 
+/*	public void set_server_side_connection()
+	{
+		HashMap<String, Object> ip_port = users.get(local_name);
+		String ip = (String)ip_port.get("IP");
+		int port = (Integer)ip_port.get("Port");
+		System.out.println(ip);
+		System.out.println(port);
+
+		ServerSocket ss = null;
+		try
+		{
+			ss = new ServerSocket(port);
+		}
+	}
+*/
 	public Message receive()
 	{
 		Message r_cq = receive_queue.poll(); // if ConcurrentLinkedQueue is empty, cq.poll return null; cq.poll() is atomic operation
@@ -134,6 +150,7 @@ public class MessagePasser
 	{
 		message.set_id(++id);
 		Rule matched_rule = CheckRule(message, 0); // check message with send rules
+		try{
 		if(matched_rule != null) // matches an action, do somethng
 		{
 			if(matched_rule.getAction().equals("drop")) // drop action
@@ -141,14 +158,14 @@ public class MessagePasser
 			else if(matched_rule.getAction().equals("duplicate")) // duplicate action
 			{
 				matched_rule.addMatch(); // as handout indicated, duplicated msg also matches the rule once!
-				send_queue.add(message);
+				send_queue.put(message);
 				while(!delay_send_queue.isEmpty())
 				{
-					send_queue.add(delay_send_queue.poll());
+					send_queue.put(delay_send_queue.poll());
 				}
 				Message new_m = message.deepCopy();
 				new_m.set_id(++id);
-				send_queue.add(new_m);
+				send_queue.put(new_m);
 			}
 			else if(matched_rule.getAction().equals("delay"))
 			{
@@ -157,14 +174,29 @@ public class MessagePasser
 		}
 		else  // message doesn't match any rule, add it to send_queue, and after that also need to check whether delay queue is empty or not
 		{
-			send_queue.add(message);
+			send_queue.put(message);
 			while(!delay_send_queue.isEmpty())
 			{
-				send_queue.add(delay_send_queue.poll());
+				send_queue.put(delay_send_queue.poll());
 			}
 		}
-		
+		}
+		catch(InterruptedException iex)
+		{
+			iex.printStackTrace();
+		}
+	}
+
+	/* function used for debugging information */
+	public void check_status()
+	{
+		System.out.println("SendRules:");
 		for(Rule rr: SendRules)
+		{
+			System.out.println(rr);
+		}
+		System.out.println("ReceiveRules:");
+		for(Rule rr: ReceiveRules)
 		{
 			System.out.println(rr);
 		}
@@ -175,6 +207,16 @@ public class MessagePasser
 		}
 		System.out.println("delay_send_queue:");
 		for(Message m: delay_send_queue)
+		{
+			System.out.println(m);
+		}
+		System.out.println("receive_queue:");
+		for(Message m: receive_queue)
+		{
+			System.out.println(m);
+		}
+		System.out.println("delay_receive_queue:");
+		for(Message m: delay_receive_queue)
 		{
 			System.out.println(m);
 		}
@@ -218,10 +260,4 @@ public class MessagePasser
 		}
 		return null;  // if no rules match, return null
 	}
-
-/*	public static void main(String[] args)
-	{
-		MessagePasser mp = new MessagePasser("config.yaml", "alice");
-		mp.load_config();
-	}*/
 }

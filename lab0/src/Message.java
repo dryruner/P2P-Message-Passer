@@ -1,3 +1,4 @@
+package bin;
 import java.io.*;
 
 public class Message implements java.io.Serializable
