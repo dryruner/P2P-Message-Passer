@@ -2,20 +2,22 @@ package bin;
 import java.util.concurrent.*;
 import java.util.*;
 import java.io.*;
+import java.net.Socket;
 import org.yaml.snakeyaml.Yaml;
 
 public class MessagePasser
 {
-	private String conf_filename;
-	private String local_name;
+	private final String conf_filename;
+	private final String local_name;
 	private int id = 0;
 	private BlockingQueue<Message> send_queue = new LinkedBlockingQueue<Message>();
 	private ConcurrentLinkedQueue<Message> receive_queue = new ConcurrentLinkedQueue<Message>();
 	private Queue<Message> delay_send_queue = new LinkedList<Message>();
-	private Queue<Message> delay_receive_queue = new LinkedList<Message>();
+	private ConcurrentLinkedQueue<Message> delay_receive_queue = new ConcurrentLinkedQueue<Message>();
 	private HashMap<String, User> users = new HashMap<String, User>();// all users
 	private ArrayList<Rule> SendRules = new ArrayList<Rule>();
 	private ArrayList<Rule> ReceiveRules = new ArrayList<Rule>();
+	private HashMap<String, ObjectOutputStream> cached_output_streams = new HashMap<String, ObjectOutputStream>();
 
 	public MessagePasser(String conf_filename, String local_name)
 	{
@@ -26,15 +28,14 @@ public class MessagePasser
 	public BlockingQueue<Message> getSendQueue(){return send_queue;}
 	public HashMap<String, User> getUsers(){return users;}
 	public ConcurrentLinkedQueue<Message> getReceiveQueue(){return receive_queue;}
-	public Queue<Message> getDelayReceiveQueue(){return delay_receive_queue;}
+	public ConcurrentLinkedQueue<Message> getDelayReceiveQueue(){return delay_receive_queue;}
+	public HashMap<String, ObjectOutputStream> getCachedOutputStreams(){return cached_output_streams;}
+	public ArrayList<Rule> getSendRules(){return SendRules;}
+	public ArrayList<Rule> getReceiveRules(){return ReceiveRules;}
 
 	/* A helper function used in init(), or when the configuration file is modified */
 	public void load_config()
 	{
-		users.clear();
-		SendRules.clear();
-		ReceiveRules.clear();
-
 		FileInputStream fis = null;
 		try
 		{
@@ -121,25 +122,19 @@ public class MessagePasser
 
 	public void init()
 	{
+		this.id = 0;
+		send_queue.clear();
+		receive_queue.clear();
+		delay_send_queue.clear();
+		delay_receive_queue.clear();
+		users.clear();
+		SendRules.clear();
+		ReceiveRules.clear();
+		cached_output_streams.clear();
+
 		load_config();
-//		set_server_side_connection(); // each node starts listening on the port indicated in the configuration file.
 	}
 
-/*	public void set_server_side_connection()
-	{
-		HashMap<String, Object> ip_port = users.get(local_name);
-		String ip = (String)ip_port.get("IP");
-		int port = (Integer)ip_port.get("Port");
-		System.out.println(ip);
-		System.out.println(port);
-
-		ServerSocket ss = null;
-		try
-		{
-			ss = new ServerSocket(port);
-		}
-	}
-*/
 	public Message receive()
 	{
 		Message r_cq = receive_queue.poll(); // if ConcurrentLinkedQueue is empty, cq.poll return null; cq.poll() is atomic operation
@@ -150,36 +145,37 @@ public class MessagePasser
 	{
 		message.set_id(++id);
 		Rule matched_rule = CheckRule(message, 0); // check message with send rules
-		try{
-		if(matched_rule != null) // matches an action, do somethng
+		try
 		{
-			if(matched_rule.getAction().equals("drop")) // drop action
-				; // drop it, i.e. do nothing
-			else if(matched_rule.getAction().equals("duplicate")) // duplicate action
+			if(matched_rule != null) // matches an action, do somethng
 			{
-				matched_rule.addMatch(); // as handout indicated, duplicated msg also matches the rule once!
+				if(matched_rule.getAction().equals("drop")) // drop action
+					; // drop it, i.e. do nothing
+				else if(matched_rule.getAction().equals("duplicate")) // duplicate action
+				{
+					matched_rule.addMatch(); // as handout indicated, duplicated msg also matches the rule once!
+					send_queue.put(message);
+					while(!delay_send_queue.isEmpty())
+					{
+						send_queue.put(delay_send_queue.poll());
+					}
+					Message new_m = message.deepCopy();
+					new_m.set_id(++id);
+					send_queue.put(new_m);
+				}
+				else if(matched_rule.getAction().equals("delay"))
+				{
+					delay_send_queue.add(message);
+				}
+			}
+			else  // message doesn't match any rule, add it to send_queue, and after that also need to check whether delay queue is empty or not
+			{
 				send_queue.put(message);
 				while(!delay_send_queue.isEmpty())
 				{
 					send_queue.put(delay_send_queue.poll());
 				}
-				Message new_m = message.deepCopy();
-				new_m.set_id(++id);
-				send_queue.put(new_m);
 			}
-			else if(matched_rule.getAction().equals("delay"))
-			{
-				delay_send_queue.add(message);
-			}
-		}
-		else  // message doesn't match any rule, add it to send_queue, and after that also need to check whether delay queue is empty or not
-		{
-			send_queue.put(message);
-			while(!delay_send_queue.isEmpty())
-			{
-				send_queue.put(delay_send_queue.poll());
-			}
-		}
 		}
 		catch(InterruptedException iex)
 		{
@@ -249,13 +245,14 @@ public class MessagePasser
 			else if( (rule.getId() > 0) && (rule.getId() != message.getId()) )
 				continue;
 
-			rule.addMatch(); // already matched rule!
-
-			if((rule.getNth() > 0) && (rule.getNth() != rule.getMatched()) )
-				continue;
-			else if( (rule.getEveryNth() > 0) && (rule.getMatched() % rule.getEveryNth()) != 0)
-				continue;
-			
+//			synchronized(rule)
+//			{
+				rule.addMatch(); // already matched rule!
+				if((rule.getNth() > 0) && (rule.getNth() != rule.getMatched()) )
+					continue;
+				else if( (rule.getEveryNth() > 0) && (rule.getMatched() % rule.getEveryNth()) != 0)
+					continue;
+//			}
 			return rule;  // match this rule
 		}
 		return null;  // if no rules match, return null

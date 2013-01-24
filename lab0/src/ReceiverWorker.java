@@ -9,15 +9,24 @@ public class ReceiverWorker extends Thread
 {
 	private Socket socket;
 	private MessagePasser mp;
+	private ConcurrentLinkedQueue worker_queue;
+	private boolean flag = true;
+	private WorkerQueue wq;
 
-	public ReceiverWorker(Socket conn_sock, MessagePasser mp)
+	public void setFlag(){flag = false;}
+
+	public ReceiverWorker(Socket conn_sock, MessagePasser mp, WorkerQueue wq)
 	{
 		this.socket = conn_sock;
 		this.mp = mp;
+		this.wq = wq;
+//		this.worker_queue = mp.getWorkerQueue();
+//		worker_queue.add(this);  // add to the worker thread list
 	}
 
 	public void run()
 	{
+		String from_user = null;
 		Logger log = Logger.getLogger("receive_log");
 		log.setUseParentHandlers(false);
 		log.setLevel(Level.INFO);
@@ -32,53 +41,77 @@ public class ReceiverWorker extends Thread
 		catch(IOException ioe){ioe.printStackTrace();}
 
 		ObjectInputStream ois = null;
-		try{	
+		ConcurrentLinkedQueue<Message> receive_queue = mp.getReceiveQueue();
+		ConcurrentLinkedQueue<Message> delay_receive_queue = mp.getDelayReceiveQueue();
+		Message msg = null;
+		try
+		{
 			ois	= new ObjectInputStream(socket.getInputStream());
-			Message msg = null;
-			msg = (Message)ois.readObject();
-			
-			/* log the received msg before checking Receive Rules */
-			log.info(msg.toString());
-
-			ConcurrentLinkedQueue<Message> receive_queue = mp.getReceiveQueue();
-			Queue<Message> delay_receive_queue = mp.getDelayReceiveQueue();
-			Rule matched_rule = mp.CheckRule(msg, 1);
-			if(matched_rule != null)
+			while(true)
 			{
-				if(matched_rule.getAction().equals("drop"))
-					;
-				else if(matched_rule.getAction().equals("duplicate"))
+				msg = (Message)ois.readObject(); // it will lead to EOFException when from_user goes offline
+				if(!flag)
+					break;
+				else
 				{
-					matched_rule.addMatch();
-					receive_queue.add(msg);
-					while(!delay_receive_queue.isEmpty())
+					from_user = msg.getSrc();
+					/* log the received msg before checking Receive Rules */
+					log.info(msg.toString());
+					Rule matched_rule = mp.CheckRule(msg, 1);
+					if(matched_rule != null)
 					{
-						receive_queue.add(delay_receive_queue.poll());
+						if(matched_rule.getAction().equals("drop"))
+							;
+						else if(matched_rule.getAction().equals("duplicate"))
+						{
+							matched_rule.addMatch();
+							receive_queue.add(msg);
+							synchronized(delay_receive_queue)
+							{
+								while(!delay_receive_queue.isEmpty())
+								{
+									receive_queue.add(delay_receive_queue.poll());
+								}
+							}
+							Message new_m = msg.deepCopy();
+							receive_queue.add(new_m);
+						}
+						else if(matched_rule.getAction().equals("delay"))
+						{
+							delay_receive_queue.add(msg);
+						}
 					}
-					Message new_m = msg.deepCopy();
-					receive_queue.add(new_m);
-				}
-				else if(matched_rule.getAction().equals("delay"))
-				{
-					delay_receive_queue.add(msg);
-				}
-			}
-			else
-			{
-				receive_queue.add(msg);
-				while(!delay_receive_queue.isEmpty())
-				{
-					receive_queue.add(delay_receive_queue.poll());
+					else
+					{
+						receive_queue.add(msg);
+						synchronized(delay_receive_queue)
+						{
+							while(!delay_receive_queue.isEmpty())
+							{
+								receive_queue.add(delay_receive_queue.poll());
+							}
+						}
+					}
 				}
 			}
+		}
+		catch(ClassNotFoundException cnfe)
+		{
+			cnfe.printStackTrace();
+		}
+		catch(EOFException eof)
+		{
+			String msg_INFO = (from_user + " went offline!");
+//			System.out.println(msg_INFO);
+			log.info(msg_INFO);
 		}
 		catch(IOException ioe)
 		{
 			ioe.printStackTrace();
 		}
-		catch(ClassNotFoundException cnfe)
+		catch(Exception ex)
 		{
-			cnfe.printStackTrace();
+			ex.printStackTrace();
 		}
 		finally
 		{
@@ -86,13 +119,12 @@ public class ReceiverWorker extends Thread
 			{
 				if(ois != null)
 					ois.close();
-				if(socket != null)
-					socket.close();
 			}
 			catch(IOException ioe)
 			{
 				ioe.printStackTrace();
 			}
+			wq.getWorkerQueue().remove(this); // since this thread will end, remove it from worker thread list;
 		}
 	}
 }

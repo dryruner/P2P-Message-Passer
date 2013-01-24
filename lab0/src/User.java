@@ -8,7 +8,6 @@ public class User
 	private String ip;
 	private int port;
 	/* User will cache all its client sockets' OutputStream */
-	private HashMap<String, ObjectOutputStream> cachedOos = new HashMap<String, ObjectOutputStream>();
 
 	public User(String Name)
 	{
@@ -18,7 +17,6 @@ public class User
 	public String getName(){return name;}
 	public String getIp(){return ip;}
 	public int getPort(){return port;}
-	public HashMap<String, ObjectOutputStream> getCachedOos(){return cachedOos;}
 
 	public void setIp(String ip){this.ip = ip;}
 	public void setPort(int port){this.port = port;}

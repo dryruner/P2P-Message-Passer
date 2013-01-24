@@ -7,12 +7,19 @@ public class Receiver extends Thread
 {
 	private MessagePasser mp;
 	private String local_name;
+	private boolean flag = true;
+	private WorkerQueue wq;
 
-	public Receiver(MessagePasser mp, String local_name)
+//	public ConcurrentLinkedQueue<ReceiverWorker> getWorkerQueue(){return worker_queue;}
+
+	public Receiver(MessagePasser mp, String local_name, WorkerQueue wq)
 	{
 		this.mp = mp;
 		this.local_name = local_name;
+		this.wq = wq;
 	}
+	
+	public void setFlag(){flag = false;}
 
 	public void run()
 	{
@@ -24,7 +31,14 @@ public class Receiver extends Thread
 			while(true)
 			{
 				Socket conn_sock = ss.accept();
-				new ReceiverWorker(conn_sock, mp).start();
+				if(flag)
+				{
+					ReceiverWorker temp_rw = new ReceiverWorker(conn_sock, mp, wq);
+					wq.getWorkerQueue().add(temp_rw);
+					temp_rw.start();
+				}
+				else
+					break;
 			}
 		}
 		catch(IOException ioe)
@@ -36,7 +50,9 @@ public class Receiver extends Thread
 			try
 			{
 				if(ss != null)
+				{
 					ss.close();
+				}
 			}
 			catch(IOException ioe)
 			{

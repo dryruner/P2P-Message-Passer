@@ -33,10 +33,15 @@ public class lab0
 			System.out.println("Usage: $java lab0 <conf_filename> <local_name>");
 			System.exit(1);
 		}
+		WorkerQueue wq = new WorkerQueue();
 		MessagePasser mp = new MessagePasser(args[0], args[1]);
 		mp.init();
-		new Sender(mp).start();
-		new Receiver(mp, args[1]).start();
+		Sender send = new Sender(mp);
+		send.start();
+		Receiver recv = new Receiver(mp, args[1], wq);
+		recv.start();
+		FileMonitor fm = new FileMonitor(args[0], args[1], mp, send, recv, wq);
+		fm.start();
 
 		String input = null;
 		BufferedReader br = null;
@@ -48,32 +53,43 @@ public class lab0
 				System.out.print(PROMPT);
 				/* get user input */
 				input = br.readLine();
-				if(input.equals("quit") || input.equals("exit"))System.exit(1);
-				if((input = parseInput(input)) != null)
-				{
-					if(input.equals("receive"))
+//				System.out.println("lab.flag = " + wq.getLab0Flag());
+//				if(wq.getLab0Flag())
+//				{
+					if(input.equals("quit") || input.equals("exit"))System.exit(1);
+					if((input = parseInput(input)) != null)
 					{
-						Message mm = mp.receive();
-						if(mm == null)
-							System.out.println("No new message.");
+						if(input.equals("receive"))
+						{
+							Message mm = mp.receive();
+							if(mm == null)
+								System.out.println("No new message.");
+							else
+							{
+								System.out.println("Received message (" + mm.getSrc() + "," + mm.getId() + ") from " + mm.getSrc() + " to " + mm.getDest() + ".|Kind: " + mm.getKind() + "|Content: " + (String)mm.getData());
+								System.out.println(mp.getReceiveQueue().size() + " more message(s)");
+							}
+						}
+						else if(input.equals("debug"))
+						{
+							mp.check_status();
+						}
 						else
 						{
-							System.out.println("Received message (" + mm.getSrc() + "," + mm.getId() + ") from " + mm.getSrc() + " to " + mm.getDest() + ".|Kind: " + mm.getKind() + "|Content: " + (String)mm.getData());
-							System.out.println(mp.getReceiveQueue().size() + " more message(s)");
+							String[] temp = input.split(" ");
+							System.out.print("Input message: ");
+							input = br.readLine();
+							mp.send(new Message(args[1], temp[1], temp[2], input));
 						}
 					}
-					else if(input.equals("debug"))
-					{
-						mp.check_status();
-					}
-					else
-					{
-						String[] temp = input.split(" ");
-						System.out.print("Input message: ");
-						input = br.readLine();
-						mp.send(new Message(args[1], temp[1], temp[2], input));
-					}
-				}
+/*				}
+				else
+				{
+					System.out.println("Configuration file has been changed, system rebooting now, will start in 5 seconds, please wait...");
+					System.out.println("");
+					try{Thread.sleep(500);}catch(InterruptedException iex){iex.printStackTrace();}
+					wq.setLab0Flag();
+				}*/
 			}
 		}
 		catch(IOException ioe)

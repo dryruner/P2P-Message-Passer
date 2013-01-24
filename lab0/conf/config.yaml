@@ -35,4 +35,8 @@ SendRules :
 ReceiveRules :
   - Action : duplicate      # 3rd message from Charlie that anyone 
     Src    : alice        # receives will be duplicated
+    Nth    : 5
+  - Action : drop
+    Src    : bob
+    Kind   : hehe
     Nth    : 3

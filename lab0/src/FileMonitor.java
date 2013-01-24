@@ -6,19 +6,19 @@ public class FileMonitor extends Thread
 {
 	private final String conf_filename;
 	private final String local_name;
-	private lab0 ll;
 	private final MessagePasser mp;
 	private Sender send;
 	private Receiver recv;
+	private WorkerQueue wq;
 
-	public FileMonitor(String conf_filename, String local_name, lab0 ll, MessagePasser mp, Sender send, Receiver recv)
+	public FileMonitor(String conf_filename, String local_name, MessagePasser mp, Sender send, Receiver recv, WorkerQueue wq)
 	{
 		this.conf_filename = conf_filename;
 		this.local_name = local_name;
-		this.ll = ll;
 		this.mp = mp;
 		this.send = send;
 		this.recv = recv;
+		this.wq = wq;
 		this.setDaemon(true);
 	}
 
@@ -32,30 +32,38 @@ public class FileMonitor extends Thread
 			if(temp != last_modify)
 			{
 				last_modify = temp;
-				/* shutdown Sender, Receiver threads and give a hint to Command line interface */
-//				ll.flag = false;
-				System.out.println("ll: " + ll);
+				/* shutdown Sender thread, there's no need to kill Receiver thread, because receiver 
+				   thread binds to the machine IP address of the running program. It doesn't make sense when
+				   one could modify his own IP address without exitting the current running program.
+				 */
 				send.setFlag();
 				send.interrupt();
-				recv.setFlag();
-				recv.interrupt();
 				
-				ConcurrentLinkedQueue<ReceiverWorker> worker_queue = mp.getWorkerQueue();
+				ConcurrentLinkedQueue worker_queue = wq.getWorkerQueue();
 				/* shutdown all the ReceiverWorker threads */
 				synchronized(worker_queue)
 				{
-					for(ReceiverWorker worker: worker_queue)
+					while(!worker_queue.isEmpty())
 					{
-						worker.setFlag();
-						worker.interrupt();
+						ReceiverWorker temp_rw = (ReceiverWorker)worker_queue.poll();
+						temp_rw.setFlag();
+						temp_rw.interrupt();
 					}
-					try{Thread.sleep(500);}catch(InterruptedException iex){iex.printStackTrace();}
 				}
+//				wq.setLab0Flag();
+/*				try
+				{
+					Thread.sleep(500);
+				}
+				catch(InterruptedException iex)
+				{
+					iex.printStackTrace();
+				}
+*/
 				/* restart initing MessagePasser, Sender and Receiver threads */
 				mp.init();
 				send = new Sender(mp);
 				send.start();
-				recv = new Receiver(mp, local_name);
 			}
 			else
 			{

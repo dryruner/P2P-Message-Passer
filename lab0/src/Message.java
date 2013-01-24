@@ -66,14 +66,6 @@ public class Message implements java.io.Serializable
 	public int getId(){return id;}
 	public Object getData(){return data;}
 
-/*
-	public void setSrc(String src){this.src = src;}
-	public void setDest(String dest){this.dest = dest;}
-	public void setKind(String kind){this.kind = kind;}
-	public void setId(int id){this.id = id;}
-	public void setData(Object data){this.data = data;}
-*/
-
 	public void set_id(int id)
 	{
 		this.id = id;

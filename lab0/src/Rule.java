@@ -34,7 +34,7 @@ public class Rule
 	public void setNth(int nth){this.nth = nth;}
 	public void setEveryNth(int everynth){this.everynth = everynth;}
 
-	public void addMatch(){matched++;}
+	synchronized public void addMatch(){matched++;}
 	public void resetMatch(){matched = 0;}
 
 	public String toString()
