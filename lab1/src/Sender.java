@@ -2,7 +2,7 @@ package bin;
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
+//import java.util.logging.*;
 import java.util.*;
 
 /* act as a "sender" to send Messages in send_queue if it's not empty */
@@ -27,7 +27,7 @@ public class Sender extends Thread
 		BlockingQueue<TimeStampedMessage> bq = mp.getSendQueue();
 		HashMap<String, ObjectOutputStream> cached_output_streams = mp.getCachedOutputStreams();
 		
-		Logger log = Logger.getLogger("send_log");
+/*		Logger log = Logger.getLogger("send_log");
 		log.setUseParentHandlers(false);
 		log.setLevel(Level.INFO);
 		try
@@ -38,7 +38,7 @@ public class Sender extends Thread
 		}
 		catch(SecurityException se){se.printStackTrace();}
 		catch(IOException ioe){ioe.printStackTrace();}
-
+*/
 
 		while(flag)
 		{
@@ -66,7 +66,7 @@ public class Sender extends Thread
 				}
 				oos.writeObject(mm);
 				/* log the Message object just send out */
-				log.info(mm.toString());
+//				log.info(mm.toString());
 				oos.flush();
 			}
 			catch(ConnectException cex)

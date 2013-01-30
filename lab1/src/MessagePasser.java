@@ -12,6 +12,7 @@ public class MessagePasser
 	private String clock_type;
 	private int local_id;
 	private int id = 0;
+	private WorkerQueue wq;
 	private BlockingQueue<TimeStampedMessage> send_queue = new LinkedBlockingQueue<TimeStampedMessage>();
 	private ConcurrentLinkedQueue<TimeStampedMessage> receive_queue = new ConcurrentLinkedQueue<TimeStampedMessage>();
 	private Queue<TimeStampedMessage> delay_send_queue = new LinkedList<TimeStampedMessage>();
@@ -21,10 +22,11 @@ public class MessagePasser
 	private ArrayList<Rule> ReceiveRules = new ArrayList<Rule>();
 	private HashMap<String, ObjectOutputStream> cached_output_streams = new HashMap<String, ObjectOutputStream>();
 
-	public MessagePasser(String conf_filename, String local_name)
+	public MessagePasser(String conf_filename, String local_name, WorkerQueue wq)
 	{
 		this.conf_filename = conf_filename;
 		this.local_name = local_name;
+		this.wq = wq;
 	}
 
 	public BlockingQueue<TimeStampedMessage> getSendQueue(){return send_queue;}
@@ -144,10 +146,12 @@ public class MessagePasser
 		load_config();
 	}
 
-	public TimeStampedMessage receive()
+	public ArrayList<TimeStampedMessage> receive()
 	{
-		TimeStampedMessage r_cq = receive_queue.poll(); // if ConcurrentLinkedQueue is empty, cq.poll return null; cq.poll() is atomic operation
-		return r_cq;
+		ArrayList<TimeStampedMessage> tm_arr = new ArrayList<TimeStampedMessage>();
+		while(!receive_queue.isEmpty())
+			tm_arr.add(receive_queue.poll());// if ConcurrentLinkedQueue is empty, cq.poll return null; cq.poll() is atomic operation
+		return tm_arr;
 	}
 
 	public void send(TimeStampedMessage message)
@@ -170,7 +174,7 @@ public class MessagePasser
 					}
 					TimeStampedMessage new_m = message.deepCopy();
 					new_m.set_id(++id);
-					new_m.setTimeStamp(new_m.getClock().inc());
+					new_m.setTimeStamp(wq.getClock().inc());
 					send_queue.put(new_m);
 				}
 				else if(matched_rule.getAction().equals("delay"))
@@ -196,6 +200,11 @@ public class MessagePasser
 	/* function used for debugging information */
 	public void check_status()
 	{
+		Clock clock = wq.getClock();
+		if(clock instanceof LogicalClock)
+			System.out.println("Local timestamp: " + clock.getTimeStamp());
+		else if(clock instanceof VectorClock)
+			System.out.println("local timestamp: " + Arrays.toString((int[])clock.getTimeStamp()));
 		System.out.println("SendRules:");
 		for(Rule rr: SendRules)
 		{

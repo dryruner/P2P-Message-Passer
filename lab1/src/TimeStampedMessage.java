@@ -20,14 +20,10 @@ public class TimeStampedMessage extends Message implements Serializable, Compara
 
 	public String toString()
 	{
-		if(clock instanceof LogicalClock)
+		if(clock.getClass().getName().equals("bin.LogicalClock"))
 			return (super.toString() + "|timestamp:" + (Integer)this.timestamp);
-		else if(clock instanceof VectorClock)
+		else if(clock.getClass().getName().equals("bin.VectorClock"))
 		{
-//			int[] __timestamp = (int[])this.timestamp;
-//			System.out.println(__timestamp instanceof int[]);
-//			for(int i = 0; i < __timestamp.length; i++)
-//				System.out.println(__timestamp[i]);
 			return (super.toString() + "|timestamp:" + Arrays.toString((int[])timestamp));
 		}
 		else
@@ -37,6 +33,11 @@ public class TimeStampedMessage extends Message implements Serializable, Compara
 	public int compareTo(TimeStampedMessage t_msg)
 	{
 		return clock.compare(timestamp, t_msg.getTimeStamp());
+	}
+
+	public boolean is_equal(TimeStampedMessage t_msg)
+	{
+		return clock.equal(timestamp, t_msg.getTimeStamp());
 	}
 
 	public TimeStampedMessage deepCopy()

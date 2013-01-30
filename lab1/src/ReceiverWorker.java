@@ -2,7 +2,7 @@ package bin;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.logging.*;
+//import java.util.logging.*;
 import java.util.concurrent.*;
 
 public class ReceiverWorker extends Thread
@@ -29,19 +29,18 @@ public class ReceiverWorker extends Thread
 	public void run()
 	{
 		String from_user = null;
-		Logger log = Logger.getLogger("receive_log");
+/*		Logger log = Logger.getLogger("receive_log");
 		log.setUseParentHandlers(false);
 		log.setLevel(Level.INFO);
 		try
 		{
-			/* receive log file */
 			FileHandler fh = new FileHandler("log/receive.log");
 			fh.setFormatter(new SimpleFormatter());
 			log.addHandler(fh);
 		}
 		catch(SecurityException se){se.printStackTrace();}
 		catch(IOException ioe){ioe.printStackTrace();}
-
+*/
 		ObjectInputStream ois = null;
 		ConcurrentLinkedQueue<TimeStampedMessage> receive_queue = mp.getReceiveQueue();
 		ConcurrentLinkedQueue<TimeStampedMessage> delay_receive_queue = mp.getDelayReceiveQueue();
@@ -59,7 +58,7 @@ public class ReceiverWorker extends Thread
 				{
 					from_user = msg.getSrc();
 					/* log the received msg before checking Receive Rules */
-					log.info(msg.toString());
+//					log.info(msg.toString());
 					Rule matched_rule = mp.CheckRule(msg, 1);
 					if(matched_rule != null)
 					{
@@ -77,7 +76,7 @@ public class ReceiverWorker extends Thread
 								}
 							}
 							TimeStampedMessage new_m = msg.deepCopy();
-							new_m.setTimeStamp(clock.inc());
+							clock.inc();
 							receive_queue.add(new_m);
 						}
 						else if(matched_rule.getAction().equals("delay"))
@@ -107,7 +106,7 @@ public class ReceiverWorker extends Thread
 		{
 			String msg_INFO = (from_user + " went offline!");
 //			System.out.println(msg_INFO);
-			log.info(msg_INFO);
+//			log.info(msg_INFO);
 		}
 		catch(IOException ioe)
 		{

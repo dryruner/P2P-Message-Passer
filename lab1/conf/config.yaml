@@ -7,11 +7,11 @@
 # The local node's name is included in this list
 Configuration :
   - Name : alice 
-    IP   : 128.237.241.35
+    IP   : 192.168.0.104
     Port : 12344        # This is the incoming port on which MP will listen
                         # May be changed for further communication as usual
   - Name : bob 
-    IP   : 128.237.241.35
+    IP   : 192.168.0.104
     Port : 14255
   - Name : charlie
     IP   : 192.168.0.104
@@ -19,6 +19,9 @@ Configuration :
   - Name : daphnie
     IP   : 192.168.0.104
     Port : 19870
+  - Name : logger
+    IP   : 192.168.0.104
+    Port : 12345
 
 ClockType : Vector
 

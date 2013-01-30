@@ -1,4 +1,5 @@
 package bin;
+import java.util.Arrays;
 
 public class VectorClock implements Clock<int[], TimeStampedMessage>, java.io.Serializable
 {
@@ -11,10 +12,11 @@ public class VectorClock implements Clock<int[], TimeStampedMessage>, java.io.Se
 		this.local_id = local_id;
 		this.timestamp = new int[size];
 	}
+	synchronized public int[] getTimeStamp(){return timestamp;}
 	synchronized public int[] inc()
 	{
 		timestamp[local_id]++;
-		return timestamp;
+		return Arrays.copyOf(timestamp, size);
 	}
 	synchronized public void syncWith(TimeStampedMessage t_msg)
 	{
@@ -25,7 +27,7 @@ public class VectorClock implements Clock<int[], TimeStampedMessage>, java.io.Se
 		timestamp[local_id]++;
 	}
 
-	private boolean equal(int[] tm1, int[] tm2)
+	public boolean equal(int[] tm1, int[] tm2)
 	{
 		int i;
 		for(i = 0; i < tm1.length; i++)

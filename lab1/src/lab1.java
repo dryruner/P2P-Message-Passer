@@ -1,5 +1,6 @@
 package bin;
 import java.io.*;
+import java.util.ArrayList;
 
 public class lab1
 {
@@ -12,6 +13,7 @@ public class lab1
 
 	public static String parseInput(String input)
 	{
+		if(input == null)return null;
 		String[] temp = input.trim().split(" ");
 		if(temp.length != 1 && temp.length != 3)
 		{
@@ -34,7 +36,7 @@ public class lab1
 			System.exit(1);
 		}
 		WorkerQueue wq = new WorkerQueue();
-		MessagePasser mp = new MessagePasser(args[0], args[1]);
+		MessagePasser mp = new MessagePasser(args[0], args[1], wq);
 		mp.init();
 		wq.setClock(new ClockFactory(mp).getClock());
 		Sender send = new Sender(mp);
@@ -62,13 +64,15 @@ public class lab1
 					{
 						if(input.equals("receive"))
 						{
-							TimeStampedMessage mm = mp.receive();
-							if(mm == null)
+							ArrayList<TimeStampedMessage> tm_arr = mp.receive();
+							if(tm_arr == null || tm_arr.size() == 0)
 								System.out.println("No new message.");
 							else
 							{
-								System.out.println("Received message (" + mm.getSrc() + "," + mm.getId() + ") from " + mm.getSrc() + " to " + mm.getDest() + ".|Kind: " + mm.getKind() + "|Content: " + (String)mm.getData() + "|timestamp: " + mm.getTimeStamp());
-								System.out.println(mp.getReceiveQueue().size() + " more message(s)");
+								for(TimeStampedMessage tm: tm_arr)
+								{
+									System.out.println(tm);
+								}
 							}
 						}
 						else if(input.equals("debug"))
@@ -78,11 +82,21 @@ public class lab1
 						else
 						{
 							String[] temp = input.split(" ");
-							System.out.print("Input message: ");
-							input = br.readLine();
-							mp.send(new TimeStampedMessage(args[1], temp[1], temp[2], input, wq.getClock().inc(), wq.getClock()));
+							if(mp.getUsers().get(temp[1]) != null)
+							{
+								System.out.print("Input message: ");
+								input = br.readLine();
+								TimeStampedMessage tm = new TimeStampedMessage(args[1], temp[1], temp[2], input, wq.getClock().inc(), wq.getClock());
+								mp.send(tm);
+							}
+							else
+							{
+								System.out.println("Error! No such user: " + temp[1]);
+							}
 						}
 					}
+					else
+						System.out.println("");
 /*				}
 				else
 				{
