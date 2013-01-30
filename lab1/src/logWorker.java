@@ -3,7 +3,6 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
-//import java.util.logging.*;
 
 public class logWorker extends Thread
 {
@@ -21,18 +20,6 @@ public class logWorker extends Thread
 	public void run()
 	{
 		String from_user = null;
-/*		Logger log = Logger.getLogger("receive_log");
-		log.setUseParentHandlers(false);
-		log.setLevel(Level.INFO);
-		try
-		{
-			FileHandler fh = new FileHandler("logger.log");
-			fh.setFormatter(new SimpleFormatter());
-			log.addHandler(fh);
-		}
-		catch(SecurityException se){se.printStackTrace();}
-		catch(IOException ioe){ioe.printStackTrace();}
-*/
 		ObjectInputStream ois = null;
 		ConcurrentLinkedQueue<TimeStampedMessage> receive_queue = mp.getReceiveQueue();
 		TimeStampedMessage msg = null;
@@ -42,7 +29,6 @@ public class logWorker extends Thread
 			while(true)
 			{
 				msg = (TimeStampedMessage)ois.readObject(); // it will lead to EOFException when from_user goes offline
-//				log.info(msg.toString());
 				receive_queue.add(msg);
 				from_user = msg.getSrc();
 			}
@@ -55,7 +41,6 @@ public class logWorker extends Thread
 		{
 			String msg_INFO = (from_user + " went offline!");
 //			System.out.println(msg_INFO);
-//			log.info(msg_INFO);
 		}
 		catch(IOException ioe)
 		{

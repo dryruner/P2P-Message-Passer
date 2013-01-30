@@ -50,16 +50,6 @@ public class FileMonitor extends Thread
 						temp_rw.interrupt();
 					}
 				}
-//				wq.setLab0Flag();
-/*				try
-				{
-					Thread.sleep(500);
-				}
-				catch(InterruptedException iex)
-				{
-					iex.printStackTrace();
-				}
-*/
 				/* restart initing MessagePasser, Sender and Receiver threads */
 				mp.init();
 				wq.setClock(new ClockFactory(mp).getClock());
