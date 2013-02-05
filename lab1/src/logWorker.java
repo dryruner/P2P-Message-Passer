@@ -23,12 +23,19 @@ public class logWorker extends Thread
 		ObjectInputStream ois = null;
 		ConcurrentLinkedQueue<TimeStampedMessage> receive_queue = mp.getReceiveQueue();
 		TimeStampedMessage msg = null;
+		String[] src_dest = null;
 		try
 		{
 			ois	= new ObjectInputStream(socket.getInputStream());
 			while(true)
 			{
 				msg = (TimeStampedMessage)ois.readObject(); // it will lead to EOFException when from_user goes offline
+				src_dest = msg.getSrc().split("\\$");
+				if(src_dest.length == 2)
+				{
+					msg.setSrc(src_dest[0]);
+					msg.setDest(src_dest[1]);
+				}
 				receive_queue.add(msg);
 				from_user = msg.getSrc();
 			}

@@ -8,19 +8,19 @@ public class lab1
 
 	public static void Usage()
 	{
-		System.out.println("Usage:(for exitting, input exit or quit) \n send <dest> <kind>\tOR:\t receive\tOR:\tdebug\n");
+		System.out.println("Usage:(for exitting, input exit or quit) \n send <dest> <kind> <log>\tOR:\t receive\tOR:\tdebug\n");
 	}
 
 	public static String parseInput(String input)
 	{
 		if(input == null)return null;
 		String[] temp = input.trim().split(" ");
-		if(temp.length != 1 && temp.length != 3)
+		if(temp.length != 1 && temp.length != 3 && temp.length != 4)
 		{
 			Usage();
 			return null;
 		}
-		if((temp.length == 1 && !(temp[0].equals("receive")) && !(temp[0].equals("debug"))) || (temp.length == 3 && !(temp[0].equals("send"))))
+		if((temp.length == 1 && !(temp[0].equals("receive")) && !(temp[0].equals("debug"))) || (temp.length == 3 && !(temp[0].equals("send"))) || (temp.length == 4 && (!(temp[0].equals("send")) || !(temp[3].equals("log")))))
 		{
 			Usage();
 			return null;
@@ -88,6 +88,13 @@ public class lab1
 								input = br.readLine();
 								TimeStampedMessage tm = new TimeStampedMessage(args[1], temp[1], temp[2], input, wq.getClock().inc(), wq.getClock());
 								mp.send(tm);
+								if(temp.length == 4)
+								{
+									TimeStampedMessage tm_2 = tm.deepCopy();
+									tm_2.setSrc(tm_2.getSrc() + "$" + tm_2.getDest());
+									tm_2.setDest("logger");
+									mp.getSendQueue().put(tm_2);
+								}
 							}
 							else
 							{
@@ -107,7 +114,7 @@ public class lab1
 				}*/
 			}
 		}
-		catch(IOException ioe)
+		catch(Exception ioe)
 		{
 			ioe.printStackTrace();
 		}

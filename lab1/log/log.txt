@@ -1,5 +1,8 @@
-src:alice|dest:logger|kind:sasa|data:sasasa|id:1|timestamp:1
-src:alice|dest:logger|kind:sasasa|data:sasasas|id:2|timestamp:2
-src:alice|dest:logger|kind:sasasas|data:sasasa|id:3|timestamp:3
-src:alice|dest:logger|kind:sasas|data:sasasa|id:4|timestamp:4
-src:alice|dest:logger|kind:sasas|data:sasasa|id:5|timestamp:5
+src:alice|dest:logger|kind:sasa|data:sasasa|id:1|timestamp:[1, 0, 0, 0, 0]
+src:bob|dest:logger|kind:sasasasa|data:sasa|id:1|timestamp:[0, 1, 0, 0, 0]
+src:bob|dest:alice|kind:hsasasa|data:sasasasasa|id:2|timestamp:[0, 2, 0, 0, 0]
+src:alice|dest:bob|kind:heheh|data:sasaas|id:2|timestamp:[3, 2, 0, 0, 0]
+src:bob|dest:logger|kind:sasasa|data:sasasa|id:3|timestamp:[3, 4, 0, 0, 0]
+src:bob|dest:logger|kind:sasasa|data:sasasa|id:3|timestamp:[3, 4, 0, 0, 0]
+src:bob|dest:alice|kind:sasasa|data:sasasa|id:4|timestamp:[3, 5, 0, 0, 0]
+src:alice|dest:bob|kind:sasas|data:sasasa|id:3|timestamp:[5, 5, 0, 0, 0]

@@ -14,10 +14,10 @@ Configuration :
     IP   : 192.168.0.104
     Port : 14255
   - Name : charlie
-    IP   : 192.168.0.104
+    IP   : 128.237.241.35
     Port : 12998
-  - Name : daphnie
-    IP   : 192.168.0.104
+  - Name : dan
+    IP   : 128.2.13.133
     Port : 19870
   - Name : logger
     IP   : 192.168.0.104

@@ -23,6 +23,8 @@ public class Message implements java.io.Serializable
 	public int getId(){return id;}
 	public Object getData(){return data;}
 
+	public void setSrc(String src){this.src = src;}
+	public void setDest(String dest){this.dest = dest;}
 	public void set_id(int id)
 	{
 		this.id = id;
