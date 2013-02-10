@@ -1,0 +1,6 @@
+Jan 29, 2013 2:17:39 PM bin.Sender run
+INFO: src:alice|dest:logger|kind:sasasasas|data:sasasasasasas|id:1|timestamp:[2, 2, 0, 0, 0]
+Jan 29, 2013 2:19:11 PM bin.Sender run
+INFO: src:alice|dest:logger|kind:sasa|data:sasasasas|id:2|timestamp:[3, 2, 0, 0, 0]
+Jan 29, 2013 2:19:16 PM bin.Sender run
+INFO: src:alice|dest:logger|kind:sasa|data:asasasasa|id:3|timestamp:[4, 2, 0, 0, 0]

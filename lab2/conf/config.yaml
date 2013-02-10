@@ -1,0 +1,87 @@
+# Defines which nodes are used in the system and how to connect to them.
+# This element should only be referenced during the constructor's initial
+# setup.
+# All names must be unique.
+# No other nodes are known.
+# These names will be used for src and dest addresses for the Message
+# The local node's name is included in this list
+Configuration :
+  - Name : alice 
+    IP   : 192.168.0.104
+    Port : 12344
+    Group:
+         - alice
+         - bob
+         - charlie
+
+  - Name : bob 
+    IP   : 192.168.0.104
+    Port : 14255
+    Group:
+         - bob
+         - dan
+         - frank
+
+  - Name : charlie
+    IP   : 192.168.0.104
+    Port : 12998
+    Group:
+         - charlie
+         - eric
+         - frank
+
+  - Name : dan
+    IP   : 192.168.0.104
+    Port : 19870
+    Group:
+         - dan
+         - alice
+         - eric
+
+  - Name : eric
+    IP   : 192.168.0.104
+    Port : 19871
+    Group:
+         - eric
+         - bob
+         - gank
+
+  - Name : frank
+    IP   : 192.168.0.104
+    Port : 19872
+    Group: 
+         - frank
+         - alice
+         - gank
+
+  - Name : gank
+    IP   : 192.168.0.104
+    Port : 19873
+    Group:
+         - gank
+         - charlie
+         - dan
+#  - Name : logger
+#    IP   : 192.168.0.104
+#    Port : 12345
+
+ClockType : Vector
+
+SendRules :
+  - Action : drop # Ack message number 4 from bob to alice will not be sent
+    Src    : alice
+    Dest   : charlie
+    Kind   : rel_test
+    EveryNth: 2
+#    Nth    : 3
+#  - Action : delay # Every Lookup message in the system will be delayed
+#    Kind   : Lookup
+#  - Action : duplicate
+#    Src    : alice
+#    EveryNth : 4
+
+ReceiveRules :
+  - Action : delay     # 3rd message from Charlie that anyone 
+    Src    : alice        # receives will be duplicate
+    Dest   : charlie
+    Kind   : order_test

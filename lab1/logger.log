@@ -1,0 +1,10 @@
+Jan 29, 2013 2:17:01 PM bin.logger main
+INFO: src:bob|dest:logger|kind:sasasas|data:sasasas|id:1|timestamp:[0, 1, 0, 0, 0]
+Jan 29, 2013 2:17:44 PM bin.logger main
+INFO: src:alice|dest:logger|kind:sasasasas|data:sasasasasasas|id:1|timestamp:[2, 2, 0, 0, 0]
+Jan 29, 2013 2:19:40 PM bin.logger main
+INFO: src:bob|dest:logger|kind:hshshhshs|data:sasasasa|id:3|timestamp:[0, 1, 0, 0, 0]
+Jan 29, 2013 2:19:40 PM bin.logger main
+INFO: src:alice|dest:logger|kind:sasa|data:sasasasas|id:2|timestamp:[2, 2, 0, 0, 0]
+Jan 29, 2013 2:19:40 PM bin.logger main
+INFO: src:alice|dest:logger|kind:sasa|data:asasasasa|id:3|timestamp:[2, 2, 0, 0, 0]

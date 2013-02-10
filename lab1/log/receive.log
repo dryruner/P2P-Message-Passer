@@ -1,0 +1,4 @@
+Jan 29, 2013 2:17:19 PM bin.ReceiverWorker run
+INFO: src:bob|dest:alice|kind:sasasasasasas|data:sasasasa|id:2|timestamp:[0, 2, 0, 0, 0]
+Jan 29, 2013 2:56:10 PM bin.ReceiverWorker run
+INFO: bob went offline!
